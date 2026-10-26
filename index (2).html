@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Build a ready-to-paste Claude prompt that creates an IB SEHS Retrieval & Application Practice Booklet and a separate Teacher Answer Guide.">
+<title>SEHS Booklet Prompt Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+html{-webkit-text-size-adjust:100%}
+body{margin:0}
+img{max-width:100%}
+/* Layout: navy masthead, then a two-column workspace (form left, sticky summary right) that stacks on phones */
+:root{
+  --bg:#F5F6F9; --surface:#FFFFFF; --surface-2:#EEF1F6; --line:#D9DEE8;
+  --fg:#1B2333; --muted:#5A6478; --navy:#1F3864; --navy-ink:#FFFFFF;
+  --gold:#C08110; --gold-soft:#FBF2DF; --teal:#2E6466; --teal-soft:#E3EFEF;
+  --d1:#B4502E; --d2:#1E5C8D; --d3:#5C3D89; --ok:#2E7D5F; --warn:#A35A00;
+  --focus:#C08110; --code-bg:#F7F8FB;
+  --f-display:"Lexend", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1522; --surface:#172033; --surface-2:#1E2A40; --line:#2C3A55;
+  --fg:#E6EAF2; --muted:#9AA6BC; --navy:#1A2E54; --navy-ink:#FFFFFF;
+  --gold:#E2A93B; --gold-soft:#3A2E14; --teal:#6FB5B7; --teal-soft:#183334;
+  --d1:#E07A57; --d2:#5B9BD0; --d3:#A587D6; --ok:#5FBF95; --warn:#E9A04B;
+  --focus:#E2A93B; --code-bg:#111A2B; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1522; --surface:#172033; --surface-2:#1E2A40; --line:#2C3A55;
+  --fg:#E6EAF2; --muted:#9AA6BC; --navy:#1A2E54; --navy-ink:#FFFFFF;
+  --gold:#E2A93B; --gold-soft:#3A2E14; --teal:#6FB5B7; --teal-soft:#183334;
+  --d1:#E07A57; --d2:#5B9BD0; --d3:#A587D6; --ok:#5FBF95; --warn:#E9A04B;
+  --focus:#E2A93B; --code-bg:#111A2B; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0}
+/* masthead */
+.mast{background:var(--navy);color:var(--navy-ink);border-bottom:4px solid var(--gold)}
+.mast .wrap{padding-block:36px 30px;display:grid;gap:22px}
+.eyebrow{font-family:var(--f-display);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:600}
+.mast h1{font-size:clamp(28px,4.2vw,42px);font-weight:600;line-height:1.1;margin-top:8px}
+.mast p.lede{max-width:64ch;margin:10px 0 0;color:#C9D3E6;font-size:17px}
+.steps{display:flex;flex-wrap:wrap;gap:10px;list-style:none;padding:0;margin:0}
+.steps li{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:7px 16px 7px 7px;font-size:15px;color:#E9EEF7}
+.steps b{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--gold);color:#1F1A10;font-family:var(--f-display);font-size:13px}
+/* workspace */
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:28px;padding-block:30px 60px;align-items:start}
+@media (max-width:940px){.grid{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.panel+.panel{margin-top:22px}
+.panel-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;padding:18px 22px;border-bottom:1px solid var(--line)}
+.panel-head .num{white-space:nowrap;font-family:var(--f-display);font-weight:600;color:var(--gold);font-size:14px;letter-spacing:.06em}
+.panel-head h2{font-size:19px;font-weight:600;color:var(--fg)}
+.panel-head .hint{margin-left:auto;font-size:13px;color:var(--muted)}
+.panel-body{padding:20px 22px 24px;display:grid;gap:18px}
+.row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:600px){.row{grid-template-columns:minmax(0,1fr)}}
+label.f{display:grid;gap:6px;font-weight:600;font-size:14px;color:var(--fg)}
+label.f small{font-weight:400;color:var(--muted);font-size:13px}
+input[type=text],textarea{width:100%;font:inherit;font-size:15px;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:10px 12px;transition:border-color .15s, box-shadow .15s}
+textarea{resize:vertical;line-height:1.5}
+input::placeholder,textarea::placeholder{color:var(--muted);opacity:.75}
+input:focus,textarea:focus{outline:none;border-color:var(--focus);box-shadow:0 0 0 3px color-mix(in srgb,var(--focus) 25%,transparent)}
+.req{color:var(--gold);margin-left:2px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;width:max-content;max-width:100%}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label{padding:9px 16px;font-size:15px;cursor:pointer;color:var(--muted);border-right:1px solid var(--line);font-weight:500}
+.seg label:last-of-type{border-right:0}
+.seg input:checked+label{background:var(--teal);color:#fff}
+.seg input:focus-visible+label{outline:2px solid var(--focus);outline-offset:-2px}
+.domains{display:grid;gap:10px}
+.dom{display:grid;grid-template-columns:auto minmax(0,1fr) 150px;gap:12px;align-items:center}
+@media (max-width:600px){.dom{grid-template-columns:auto minmax(0,1fr)}.dom input.ref{grid-column:2}}
+.dom .sw{width:34px;height:34px;border-radius:6px;display:grid;place-items:center;color:#fff;font-family:var(--f-display);font-weight:600;font-size:14px}
+.note{font-size:14px;color:var(--muted);margin:0}
+.notes-box{position:relative}
+.notes-box textarea{min-height:300px;font-family:var(--f-mono);font-size:13px}
+.counter{display:flex;justify-content:space-between;gap:12px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;padding:3px 10px;border-radius:999px;background:var(--surface-2);color:var(--muted)}
+.chip.ok{background:var(--teal-soft);color:var(--teal)}
+/* outputs */
+.files{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:600px){.files{grid-template-columns:minmax(0,1fr)}}
+.file{border:1px solid var(--line);border-radius:8px;padding:16px 16px 14px;background:var(--surface)}
+.file .tag{font-family:var(--f-display);font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:600}
+.file h3{font-size:16px;font-weight:600;margin:4px 0 8px}
+.file ul{margin:0;padding-left:18px;font-size:14px;color:var(--muted);display:grid;gap:3px}
+.file.s{border-top:3px solid var(--navy)} .file.s .tag{color:var(--d2)}
+.file.t{border-top:3px solid var(--gold)} .file.t .tag{color:var(--gold)}
+details.fixed{border:1px solid var(--line);border-radius:8px;background:var(--surface-2)}
+details.fixed summary{cursor:pointer;padding:12px 16px;font-weight:600;font-size:15px;list-style:none;display:flex;justify-content:space-between;gap:12px}
+details.fixed summary::-webkit-details-marker{display:none}
+details.fixed summary span{font-weight:400;color:var(--muted);font-size:13px}
+details.fixed pre{margin:0;max-height:420px;overflow:auto;padding:16px;border-top:1px solid var(--line);background:var(--code-bg);font-family:var(--f-mono);font-size:12px;line-height:1.55;white-space:pre-wrap;color:var(--fg)}
+/* sidebar */
+aside{position:sticky;top:calc(env(safe-area-inset-top,0px) + 20px);display:grid;gap:16px}
+@media (max-width:940px){aside{position:static}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px}
+.card h3{font-size:15px;font-weight:600;margin-bottom:12px}
+.check{list-style:none;padding:0;margin:0 0 18px;display:grid;gap:8px;font-size:14px}
+.check li{display:flex;gap:10px;align-items:flex-start;color:var(--muted)}
+.check li i{flex:none;width:18px;height:18px;border-radius:50%;border:2px solid var(--line);margin-top:2px;display:grid;place-items:center;font-style:normal;font-size:11px;font-weight:700}
+.check li.done{color:var(--fg)}
+.check li.done i{background:var(--ok);border-color:var(--ok);color:#fff}
+.check li.opt i{border-style:dashed}
+button{font:inherit;cursor:pointer}
+.btn{width:100%;border:0;border-radius:8px;padding:14px 18px;font-family:var(--f-display);font-weight:600;font-size:16px;display:flex;align-items:center;justify-content:center;gap:10px;transition:transform .08s, background .15s}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--gold);color:#1F1A10}
+.btn.primary:hover{background:color-mix(in srgb,var(--gold) 88%,#000)}
+.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-size:14px;padding:10px 14px}
+.btn.ghost:hover{background:var(--surface-2)}
+.btn:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.btns{display:grid;gap:10px}
+.btns .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.status{font-size:13px;color:var(--muted);min-height:20px;text-align:center}
+.status.ok{color:var(--ok);font-weight:600}
+.status.warn{color:var(--warn)}
+.tips{font-size:14px;color:var(--muted);display:grid;gap:10px;margin:0;padding:0;list-style:none}
+.tips li{padding-left:14px;border-left:2px solid var(--teal-soft)}
+.tips b{color:var(--fg);font-weight:600}
+.meta{font-size:12px;color:var(--muted);font-family:var(--f-mono)}
+/* preview dialog */
+.preview{position:fixed;inset:0;background:color-mix(in srgb,#0B1020 60%,transparent);display:grid;place-items:center;z-index:50;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.preview .box{background:var(--surface);border-radius:12px;width:min(900px,100%);max-height:88vh;display:grid;grid-template-rows:auto minmax(0,1fr) auto;overflow:hidden;border:1px solid var(--line)}
+.preview header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.preview header h3{font-size:16px}
+.preview pre{margin:0;overflow:auto;padding:18px;font-family:var(--f-mono);font-size:12px;line-height:1.55;white-space:pre-wrap;background:var(--code-bg);color:var(--fg)}
+.preview footer{display:flex;gap:10px;justify-content:flex-end;padding:12px 18px;border-top:1px solid var(--line);flex-wrap:wrap}
+.preview footer .btn{width:auto}
+footer.site{border-top:1px solid var(--line);padding-block:20px;font-size:13px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+</head>
+<body>
+<header class="mast">
+  <div class="wrap">
+    <div>
+      <div class="eyebrow">IB Sport, Exercise &amp; Health Science · Resource builder</div>
+      <h1>Practice Booklet Prompt Builder</h1>
+      <p class="lede">Turn your topic notes into a ready-to-paste prompt. Claude will use it to build a closed-book Retrieval &amp; Application Practice Booklet for students and a separate Teacher Answer Guide, both as Word files.</p>
+    </div>
+    <ol class="steps" aria-label="How it works">
+      <li><b>1</b>Enter the syllabus details</li>
+      <li><b>2</b>Paste your notes</li>
+      <li><b>3</b>Copy the prompt into Claude</li>
+    </ol>
+  </div>
+</header>
+
+<main class="wrap grid">
+  <div>
+    <section class="panel" aria-labelledby="h-topic">
+      <div class="panel-head"><span class="num">STEP 1</span><h2 id="h-topic">IB curriculum details</h2><span class="hint"><span class="req">*</span> required</span></div>
+      <div class="panel-body">
+        <div class="row">
+          <label class="f" for="code"><span>Topic code<span class="req" aria-hidden="true">*</span></span>
+            <input type="text" id="code" placeholder="e.g. A.2.2.1" autocomplete="off">
+          </label>
+          <label class="f" for="title"><span>Short topic title<span class="req" aria-hidden="true">*</span></span>
+            <input type="text" id="title" placeholder="e.g. Macronutrients" autocomplete="off">
+          </label>
+        </div>
+        <label class="f" for="statement">Syllabus statement <small>Copy it word for word from the IB SEHS guide. It appears on the booklet cover.</small>
+          <textarea id="statement" rows="3" placeholder="e.g. Macronutrients (carbohydrates, proteins and lipids) provide sources of energy to maintain bodily functions during growth, rest and physical activity."></textarea>
+        </label>
+        <div class="row">
+          <div class="f" style="display:grid;gap:6px">
+            <span style="font-weight:600;font-size:14px">Level</span>
+            <div class="seg" role="radiogroup" aria-label="Level">
+              <input type="radio" name="level" id="lv-both" value="SL and HL" checked><label for="lv-both">SL and HL</label>
+              <input type="radio" name="level" id="lv-hl" value="HL only"><label for="lv-hl">HL only</label>
+            </div>
+          </div>
+          <label class="f" for="year">Syllabus year
+            <input type="text" id="year" value="2026" autocomplete="off">
+          </label>
+        </div>
+        <div style="display:grid;gap:10px">
+          <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline">
+            <span style="font-weight:600;font-size:14px">Domains <small style="font-weight:400;color:var(--muted)">(optional: 2–3 sub-topics that organise the booklet)</small></span>
+          </div>
+          <div class="domains">
+            <div class="dom"><span class="sw" style="background:var(--d1)" aria-hidden="true">1</span><input type="text" id="d1" aria-label="Domain 1 name" placeholder="e.g. Macronutrient Structure &amp; Energy"><input type="text" class="ref" id="r1" aria-label="Domain 1 syllabus reference" placeholder="Ref, e.g. A.2.2.1"></div>
+            <div class="dom"><span class="sw" style="background:var(--d2)" aria-hidden="true">2</span><input type="text" id="d2" aria-label="Domain 2 name" placeholder="e.g. Fuelling Performance"><input type="text" class="ref" id="r2" aria-label="Domain 2 syllabus reference" placeholder="Ref"></div>
+            <div class="dom"><span class="sw" style="background:var(--d3)" aria-hidden="true">3</span><input type="text" id="d3" aria-label="Domain 3 name" placeholder="e.g. Low Energy Availability &amp; RED-S"><input type="text" class="ref" id="r3" aria-label="Domain 3 syllabus reference" placeholder="Ref"></div>
+          </div>
+          <p class="note">Leave these blank and Claude will choose sensible domains from your notes and tell you what it picked.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="h-notes">
+      <div class="panel-head"><span class="num">STEP 2</span><h2 id="h-notes">Source notes</h2><span class="hint"><span class="req">*</span> required</span></div>
+      <div class="panel-body">
+        <p class="note">Paste your class notes, the syllabus extract, and any past-paper questions with markschemes and examiner reports. Messy formatting is fine. The more past-paper material you include, the closer the booklet will match real exams.</p>
+        <div class="notes-box">
+          <label for="notes" class="f" style="font-size:0;gap:0">Source notes</label>
+          <textarea id="notes" placeholder="Paste your notes here…&#10;&#10;e.g.&#10;CARBOHYDRATES: made up of carbon, hydrogen and oxygen – (CH2O)n&#10;- Monosaccharides: glucose, fructose, galactose&#10;- 100 g of CHO = 1760 kJ&#10;…&#10;&#10;Past paper: Define glycemic index (GI). [1]&#10;Markscheme: ranking system for carbohydrates based on their immediate effect on blood glucose…"></textarea>
+        </div>
+        <div class="counter"><span id="wc">0 words</span><span id="pp" class="chip">No past-paper markschemes detected yet</span></div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="h-out">
+      <div class="panel-head"><span class="num">STEP 3</span><h2 id="h-out">What Claude will build</h2></div>
+      <div class="panel-body">
+        <div class="files">
+          <div class="file s">
+            <div class="tag">File 1 · .docx</div>
+            <h3>Student Booklet</h3>
+            <ul>
+              <li>Cover, Make It Stick techniques and spacing plan</li>
+              <li>IB command-terms table</li>
+              <li>Per domain: Generate First, Quick Recall, Worked Example, Guided Application, Data-Response, MCQ, Independent Practice, Reflection</li>
+              <li>Session 2 Interleaved Review and Session 3 Final Mixed Test</li>
+            </ul>
+          </div>
+          <div class="file t">
+            <div class="tag">File 2 · .docx</div>
+            <h3>Teacher Answer Guide</h3>
+            <ul>
+              <li>Teacher-only cover and footer</li>
+              <li>Quick Recall and MCQ keys with reasons</li>
+              <li>Guided Application answers</li>
+              <li>IB-style markschemes (✔ points, Accept, Award [N max])</li>
+              <li>Interleaved Review and Final Test markschemes</li>
+            </ul>
+          </div>
+        </div>
+        <details class="fixed">
+          <summary>View the fixed build instructions <span>Part C and Part D · included automatically</span></summary>
+          <pre id="fixedView"></pre>
+        </details>
+      </div>
+    </section>
+  </div>
+
+  <aside aria-label="Copy prompt">
+    <div class="card">
+      <h3>Ready to copy?</h3>
+      <ul class="check" id="checklist">
+        <li id="ck-code"><i aria-hidden="true">✓</i>Topic code</li>
+        <li id="ck-title"><i aria-hidden="true">✓</i>Short topic title</li>
+        <li id="ck-stmt" class="opt"><i aria-hidden="true">✓</i>Syllabus statement</li>
+        <li id="ck-dom" class="opt"><i aria-hidden="true">✓</i>Domains (optional)</li>
+        <li id="ck-notes"><i aria-hidden="true">✓</i>Source notes</li>
+      </ul>
+      <div class="btns">
+        <button class="btn primary" id="copyBtn" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+          Copy full prompt
+        </button>
+        <div class="two">
+          <button class="btn ghost" id="previewBtn" type="button">Preview</button>
+          <button class="btn ghost" id="exampleBtn" type="button">Load example</button>
+        </div>
+        <button class="btn ghost" id="clearBtn" type="button">Clear all fields</button>
+      </div>
+      <p class="status" id="status" role="status" aria-live="polite"></p>
+      <div class="meta" id="meta"></div>
+    </div>
+    <div class="card">
+      <h3>Before you paste</h3>
+      <ul class="tips">
+        <li><b>Use Claude with file creation on.</b> It needs to build and send back Word files.</li>
+        <li><b>One topic per chat.</b> Start a new conversation for each booklet.</li>
+        <li><b>Check the summary.</b> Claude lists the domains it chose and any errors it fixed in your notes.</li>
+        <li><b>Drafts stay in this browser.</b> Your entries are kept on this device only.</li>
+      </ul>
+    </div>
+  </aside>
+</main>
+
+<footer class="site"><div class="wrap">Built for IB DP Sport, Exercise and Health Science (first assessment 2026). Design follows the Make It Stick retrieval-practice booklet format.</div></footer>
+
+<div class="preview" id="preview" hidden role="dialog" aria-modal="true" aria-labelledby="pv-h">
+  <div class="box">
+    <header><h3 id="pv-h">Full prompt preview</h3><button class="btn ghost" id="pvClose" type="button" style="width:auto">Close</button></header>
+    <pre id="pvText" tabindex="0"></pre>
+    <footer><button class="btn primary" id="pvCopy" type="button" style="width:auto">Copy full prompt</button></footer>
+  </div>
+</div>
+
+<script type="text/plain" id="fixedText">################################################################
+PART C — WHAT TO BUILD  (do not edit)
+################################################################
+
+You are an experienced IB Sport, Exercise and Health Science teacher
+and examiner. Create TWO Word documents (.docx) for the topic in PART A:
+
+  FILE 1: [Topic code]_[Short title]_Student_Booklet.docx
+  FILE 2: [Topic code]_[Short title]_Teacher_Answer_Guide.docx
+
+The student booklet is a closed-book retrieval and application
+practice booklet. It has NO teaching content of its own. Students use
+it AFTER they have completed their notes on the topic.
+
+GROUND RULES FOR CONTENT
+- Base every question, answer and markscheme on PART B or on standard
+  IB SEHS content at this level. Do not invent physiology.
+- Where PART B contains real IB past-paper questions, reuse or adapt
+  them (especially for the MCQs). Match their style and mark
+  allocations.
+- Use only IB command terms. Prefer State, Identify, Define,
+  Calculate, Outline, Describe, Distinguish, Compare and contrast,
+  Explain, Suggest, Deduce, Discuss, Evaluate. Use "State" rather
+  than "List".
+- "Calculate" questions are worth [1] mark, for the correct answer
+  only. Students are still told to show their working.
+- Use realistic sporting scenarios and athletes of mixed ages and
+  sexes.
+- Use realistic numbers in every data table. Check that every
+  calculation in the answers is arithmetically correct.
+- If PART B contains an error (e.g. a wrong answer key), correct it
+  and tell me what you changed.
+- If PART A is incomplete, make a sensible choice, state it at the
+  start, and carry on. Don't stop to ask.
+
+----------------------------------------------------------------
+FILE 1 — STUDENT BOOKLET (in this order)
+----------------------------------------------------------------
+1. COVER (text and colour only, no images), centred:
+   - "SPORTS, EXERCISE AND HEALTH SCIENCE" in navy, bold, letter-spaced
+   - "IB Diploma Programme — [Syllabus year] Syllabus" in grey
+   - A short gold line
+   - The topic code, then the short title, both large, bold and gold
+   - "Core content · SL and HL" (or "HL only") in small grey text
+   - The syllabus statement in italics
+   - "RETRIEVAL & APPLICATION PRACTICE BOOKLET" in navy
+   - "Built around five techniques from Make It Stick: The Science of
+     Successful Learning" in bold italic teal
+   - "For use AFTER you have completed your notes on [topic code]"
+     in italics
+   - Name: ______  Class: ______  Date: ______
+
+2. HOW THIS BOOKLET WORKS — AND WHY
+   Start with this exact intro:
+   "This booklet is deliberately built around five techniques from
+   Make It Stick, the research-backed book on how learning actually
+   works. Passive re-reading of notes feels productive but barely
+   improves long-term memory — these techniques are less
+   comfortable, but they work."
+   Then five separately coloured boxes, each with a thick coloured
+   left edge:
+   🧠 1. Generate first — guessing before reading primes deeper learning
+   🔁 2. Retrieve, don't re-read — closed-note testing beats re-reading
+   📅 3. Space it out — follow the spacing plan, don't cram in one sitting
+   🔀 4. Interleave — the review sections deliberately mix domains
+   🎯 5. Calibrate — confidence ratings surface false confidence from re-reading
+
+3. YOUR SPACING PLAN
+   A grey table of three sessions with a "Date done" column:
+   - Session 1 (today): all domains in order.
+   - Session 2 (2–4 days later): Interleaved Review.
+   - Session 3 (1–2 weeks later): Final Mixed Test, timed at about
+     1.8 minutes per mark.
+
+4. HOW TO ANSWER: IB COMMAND TERMS
+   A table with three columns: term, IB definition, answer tip.
+
+5. ONE SECTION PER DOMAIN. Each domain starts on a new page and
+   contains, in this order:
+   a. Domain header bar (in the domain colour), with the syllabus
+      reference underneath
+   b. Generate First: 2 prediction prompts with writing lines, in a
+      box tinted in the domain colour
+   c. Quick Recall — closed notes: 5–6 short questions with 2 lines each
+   d. Self-check: a grey box of answers, placed directly after
+      Quick Recall, with "My score: __ / N"
+   e. Worked Example: one exam-style question
+      - a 3-column table: ✔ mark number | full-mark model answer |
+        why it earns the mark
+      - the header row in the domain colour
+      - an "Examiner tip" underneath
+   f. Guided Application: one scenario and 3–4 fill-in-the-blank
+      prompts that build step by step
+   g. Skill Check — Data-Response: a small, realistic constructed
+      data table, then three sub-questions:
+      - (a) State [1]
+      - (b) Calculate [1]
+      - (c) Deduce / Discuss / Suggest [3]
+   h. Multiple Choice Questions: 4–5 questions
+      - options A–D, each on its own line
+      - a grey answer key with a one-line reason for each answer
+   i. Independent Practice: 2 unscaffolded exam-style questions,
+      worth [4] each
+   j. Reflection + Confidence Check
+      - 2–3 self-reflection prompts
+      - ☐ HIGH ☐ MEDIUM ☐ LOW
+      - in a light blue box
+
+6. SESSION 2 — INTERLEAVED REVIEW
+   - 12 short questions drawn from all domains, shuffled (not grouped
+     by domain).
+   - Each question is tagged with its domain, e.g. [FUELLING
+     PERFORMANCE], in that domain's colour.
+   - Each question has 3 lines and a confidence line.
+   - End with "Score: __ / 12" and "Check your answers with your
+     teacher".
+
+7. SESSION 3 — FINAL MIXED TEST
+   - 3 exam-conditions questions. Each must combine content from 2 or
+     more domains, and shows "Draws on: Domains X + Y".
+   - Marks rise across the questions, e.g. [3], [7], [4].
+   - Finish with an "After marking" reflection box.
+
+The student booklet must NOT contain markschemes for Guided
+Application, Skill Check, Independent Practice, Interleaved Review or
+the Final Mixed Test.
+
+----------------------------------------------------------------
+FILE 2 — TEACHER ANSWER GUIDE (in this order)
+----------------------------------------------------------------
+1. Cover in the same style as the student booklet, but titled
+   "TEACHER ANSWER GUIDE", with "Teacher copy — not for distribution
+   to students". Also add "not for student distribution" to the
+   footer of every page.
+2. "How to use this guide": a short table showing which answers are
+   in which section.
+3. For each domain, starting on a new page:
+   - Quick Recall answers
+   - MCQ key with reasons
+   - Guided Application accepted answers (every blank, in order)
+   - Skill Check markscheme
+   - Independent Practice markscheme
+4. Session 2: a model answer for all 12 Interleaved Review questions.
+5. Session 3: the Final Mixed Test markscheme.
+
+MARKSCHEME STYLE (IB conventions)
+- One ✔ per marking point.
+- Give more marking points than the marks available.
+- Use "Accept …" for alternative answers.
+- Use "Award [N max] if …" to cap one-sided answers.
+- Require specific data from the table for data-response marks.
+- For Discuss and Evaluate questions, require a conclusion or
+  evaluative point for full marks.
+
+
+################################################################
+PART D — DESIGN & BUILD RULES  (do not edit)
+################################################################
+
+STYLE
+- Paper: A4. Margins: 2 cm. Font: Calibri throughout (set it as the
+  document default).
+- Colours (hex):
+  - Navy 1F3864: main section bars and accents
+  - Gold C08110: cover title and Final Mixed Test bars
+  - Teal 2E6466: in-domain subheadings and box titles
+  - Grey F0F0F0: answer and Self-check boxes
+  - Reflection box: background EAF1F9, border 9DC3E6
+  - Generate-first technique box: background DCEEEA, edge 2E7D5F
+- Domain colours (bar / pale tint):
+  - Domain 1: B4502E / FBEAE3 (rust)
+  - Domain 2: 1E5C8D / E7F2F8 (blue)
+  - Domain 3: 5C3D89 / F1E8FB (purple)
+- Main section headers are full-width solid colour bars with white
+  bold text:
+  - navy for general sections
+  - the domain colour for domain headers
+- In-domain subheadings (Quick Recall, Worked Example, etc.) are
+  teal bold text with a thin teal underline, not bars.
+- Every "[N marks]" label for Skill Check and Independent Practice is
+  its own full-width bar with the text right-aligned:
+  - the domain colour inside domains
+  - gold in the Final Mixed Test
+- Self-check and Reflection boxes stay grey and light blue in every
+  domain. Only Generate First and the Worked Example header use the
+  domain colour.
+- Writing lines are thin grey bottom borders on fixed-height
+  paragraphs, not tables.
+- Footer on every page except the cover: the topic name on the left
+  and the page number on the right.
+
+KEEP SECTIONS TOGETHER (important)
+- No subsection may split across two pages. Wrap each whole
+  subsection in a single-cell, borderless table whose row cannot
+  split across pages. Do this for:
+  - Generate First (together with the domain header)
+  - Quick Recall + Self-check
+  - Worked Example
+  - Guided Application
+  - Skill Check
+  - MCQ + answer key
+  - Independent Practice
+  - Reflection
+- Each question, its mark bar and its answer lines must also stay
+  together.
+- If a section doesn't fit on the rest of a page, move the whole
+  section to the next page. Shorten answer lines slightly if needed
+  so that every section fits on one page.
+
+BUILD
+- Build with the docx npm package (it's already installed; don't run
+  npm install).
+- Use ShadingType.CLEAR for all shading.
+- Set columnWidths on every table and a width on every cell, in DXA.
+- Put every PageBreak inside a Paragraph.
+
+CHECK BEFORE SENDING (don't skip any of these)
+1. Fact-check every question, answer and markscheme against PART B
+   and standard IB SEHS content. Recalculate every number.
+2. Convert both files to PDF and render every page as an image.
+   Look at each page and check:
+   - colours
+   - spacing
+   - nothing cut off
+   - no section split across pages
+   Fix any problems and render again.
+3. Send both .docx files. Then give me a short summary covering:
+   - the domains you chose
+   - any errors you corrected in my notes
+   - anything I should double-check against the official IB guide
+</script>
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const fields = ['code','title','statement','year','d1','r1','d2','r2','d3','r3','notes'];
+  const FIXED = $('fixedText').textContent.trim();
+  $('fixedView').textContent = FIXED;
+  const KEY = 'sehs-booklet-prompt-draft-v1';
+
+  const EXAMPLE = {
+    code:'A.2.2.1', title:'Macronutrients',
+    statement:'Macronutrients (carbohydrates, proteins and lipids) provide sources of energy to maintain bodily functions during growth, rest and physical activity.',
+    year:'2026', level:'SL and HL',
+    d1:'Macronutrient Structure & Energy', r1:'A.2.2.1',
+    d2:'Fuelling Performance', r2:'A.2.2.1',
+    d3:'Low Energy Availability & RED-S', r3:'A.2.2.1',
+    notes:'[EXAMPLE NOTES — replace with your own]\n\nCARBOHYDRATES: made up of carbon, hydrogen and oxygen atoms – (CH2O)n\n- Monosaccharides: glucose, fructose, galactose\n- Disaccharides: sucrose (condensation reaction releases water)\n- Polysaccharides: starch, glycogen\n- 100 g CHO = 1760 kJ; ~400 g stored in muscle, ~100 g in liver\n\nLIPIDS: triglycerides = one glycerol + three fatty acids; 100 g fat = 4000 kJ\n- Saturated: single C–C bonds, solid at room temperature\n- Unsaturated: one or more C=C double bonds, liquid at room temperature\n\nPROTEIN: amino acids (C, H, O, N) linked by peptide bonds; 100 g = 1720 kJ; RDI 0.8 g/kg/day\n\nGLYCAEMIC INDEX: ranking of carbohydrates by immediate effect on blood glucose vs 50 g glucose reference\n\nLEA / RED-S: EA = (energy intake – exercise energy expenditure) ÷ fat-free mass; optimal 45 kcal/kg FFM/day (females); LEA < 30\n\nPast paper: What is the composition of triacylglycerol? [1]\nA. Three glycerol and one fatty acid  B. One glucose and three fatty acids  C. One glycerol and three fatty acids  D. Three glucose and one fatty acid\nMarkscheme: C'
+  };
+
+  function val(id){ return ($(id).value || '').trim(); }
+  function level(){ const r = document.querySelector('input[name=level]:checked'); return r ? r.value : 'SL and HL'; }
+  function orBlank(v, fallback){ return v ? v : fallback; }
+
+  function buildPrompt(){
+    const code = orBlank(val('code'), '[not provided — infer from notes]');
+    const title = orBlank(val('title'), '[not provided — infer from notes]');
+    const stmt = orBlank(val('statement'), '[not provided — use the closest wording from the notes]');
+    const year = orBlank(val('year'), '2026');
+    const doms = [1,2,3].map(n => {
+      const d = val('d'+n), r = val('r'+n);
+      return `  Domain ${n}: ${d || '[Claude to choose]'}   Syllabus reference: ${r || '[Claude to choose]'}`;
+    }).join('\n');
+    const notes = val('notes') || '[NO NOTES PROVIDED — use standard IB SEHS content for this syllabus statement and tell me you did so]';
+    return [
+'################################################################',
+'PART A — YOUR TOPIC',
+'################################################################',
+'',
+`Topic code:            ${code}`,
+`Short topic title:     ${title}`,
+`Syllabus statement:    ${stmt}`,
+`Level:                 ${level()}`,
+`Syllabus year:         ${year}`,
+'',
+'Domains (if marked "Claude to choose", pick 2–3 sensible domains from the notes):',
+doms,
+'',
+'',
+'################################################################',
+'PART B — YOUR SOURCE NOTES',
+'################################################################',
+'',
+'------------------------- START OF NOTES -------------------------',
+'',
+notes,
+'',
+'-------------------------- END OF NOTES --------------------------',
+'',
+'',
+FIXED
+    ].join('\n');
+  }
+
+  function words(t){ const m = t.trim().match(/\S+/g); return m ? m.length : 0; }
+
+  function refresh(){
+    const set = (id, ok) => $(id).classList.toggle('done', ok);
+    set('ck-code', !!val('code'));
+    set('ck-title', !!val('title'));
+    set('ck-stmt', !!val('statement'));
+    set('ck-dom', !!(val('d1') || val('d2') || val('d3')));
+    set('ck-notes', words(val('notes')) >= 20);
+    const n = val('notes');
+    $('wc').textContent = words(n).toLocaleString() + ' words';
+    const hasMS = /mark\s*scheme|markscheme|examiner/i.test(n);
+    const pp = $('pp');
+    pp.textContent = hasMS ? 'Past-paper markschemes included' : 'No past-paper markschemes detected yet';
+    pp.classList.toggle('ok', hasMS);
+    const len = buildPrompt().length;
+    $('meta').textContent = 'Prompt length: ' + len.toLocaleString() + ' characters';
+    save();
+  }
+
+  function save(){
+    try {
+      const data = {}; fields.forEach(f => data[f] = $(f).value); data.level = level();
+      localStorage.setItem(KEY, JSON.stringify(data));
+    } catch(e) {}
+  }
+  function load(obj){
+    fields.forEach(f => { if (obj && typeof obj[f] === 'string') $(f).value = obj[f]; });
+    if (obj && obj.level) { const r = document.querySelector(`input[name=level][value="${obj.level}"]`); if (r) r.checked = true; }
+  }
+  try { const raw = localStorage.getItem(KEY); if (raw) load(JSON.parse(raw)); } catch(e) {}
+
+  let statusTimer;
+  function status(msg, kind){
+    const s = $('status'); s.textContent = msg; s.className = 'status' + (kind ? ' ' + kind : '');
+    clearTimeout(statusTimer); statusTimer = setTimeout(() => { s.textContent=''; s.className='status'; }, 5000);
+  }
+
+  function missing(){
+    const m = [];
+    if (!val('code')) m.push('topic code');
+    if (!val('title')) m.push('title');
+    if (words(val('notes')) < 20) m.push('notes');
+    return m;
+  }
+
+  async function copy(){
+    const text = buildPrompt();
+    const miss = missing();
+    try {
+      await navigator.clipboard.writeText(text);
+      if (miss.length) status('Copied — but ' + miss.join(', ') + ' ' + (miss.length > 1 ? 'are' : 'is') + ' missing.', 'warn');
+      else status('Copied. Paste it into a new Claude chat.', 'ok');
+    } catch(e) {
+      openPreview();
+      const pre = $('pvText'); const range = document.createRange(); range.selectNodeContents(pre);
+      const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+      status('Your browser blocked copying. The prompt is selected — press Ctrl+C (or ⌘C).', 'warn');
+    }
+  }
+
+  function openPreview(){ $('pvText').textContent = buildPrompt(); $('preview').hidden = false; $('pvClose').focus(); }
+  function closePreview(){ $('preview').hidden = true; $('previewBtn').focus(); }
+
+  document.addEventListener('input', refresh);
+  document.addEventListener('change', refresh);
+  $('copyBtn').addEventListener('click', copy);
+  $('pvCopy').addEventListener('click', copy);
+  $('previewBtn').addEventListener('click', openPreview);
+  $('pvClose').addEventListener('click', closePreview);
+  $('preview').addEventListener('click', e => { if (e.target.id === 'preview') closePreview(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('preview').hidden) closePreview(); });
+  $('exampleBtn').addEventListener('click', () => { load(EXAMPLE); refresh(); status('Example loaded (A.2.2.1 Macronutrients). Replace it with your own topic.'); });
+  let armed = false;
+  $('clearBtn').addEventListener('click', () => {
+    if (!armed) { armed = true; $('clearBtn').textContent = 'Click again to clear everything'; setTimeout(() => { armed = false; $('clearBtn').textContent = 'Clear all fields'; }, 3000); return; }
+    armed = false; $('clearBtn').textContent = 'Clear all fields';
+    fields.forEach(f => $(f).value = f === 'year' ? '2026' : ''); $('lv-both').checked = true; refresh(); status('All fields cleared.');
+  });
+  refresh();
+})();
+</script>
+
+</body>
+</html>
